@@ -39,3 +39,7 @@ nb-configuration.xml
 /.quarkus/cli/plugins/
 # TLS Certificates
 .certs/
+
+# MinIo data
+minio_data/*
+!minio_data/.gitkeep

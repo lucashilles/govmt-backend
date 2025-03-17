@@ -1,0 +1,73 @@
+services:
+  db:
+    container_name: pg_container
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: govmtdb
+    ports:
+      - "5432:5432"
+
+  storage:
+    container_name: minio_storage
+    image: quay.io/minio/minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - ./minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 20s
+      retries: 3
+
+  createbucket:
+    image: minio/mc
+    network_mode: service:storage
+    depends_on:
+      storage:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://storage:9000 minio minio123;
+      /usr/bin/mc mb myminio/govmt-bucket;
+      /usr/bin/mc anonymous set public myminio/govmt-bucket;
+      exit 0;
+      "
+
+# Test db creation and seed before it is implemented with application
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://pg_container:5432/govmtdb -user=root -password=root -connectRetries=60 migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - db
+# Front end to validate db
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+#  application:
+#    build: ./
+#    restart: always
+#    container_name: application_container
+#    healthcheck:
+#      test: curl --fail -s http://localhost:8080/api/common/ping || exit 1
+#      interval: 30s
+#      timeout: 2s
+#      retries: 1
+#    depends_on:
+#      - db
+#    ports:
+#      - "8080:8080"
