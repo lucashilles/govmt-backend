@@ -5570,3 +5570,5 @@ insert into cidade (cid_id, cid_nome, cid_uf) values (9991, 'Tunápolis', 'SC');
 insert into cidade (cid_id, cid_nome, cid_uf) values (9993, 'Guarinos', 'GO');
 insert into cidade (cid_id, cid_nome, cid_uf) values (9995, 'Rio Quente', 'GO');
 insert into cidade (cid_id, cid_nome, cid_uf) values (9997, 'Coronel Sapucaia', 'MS');
+
+SELECT setval(pg_get_serial_sequence('cidade', 'cid_id'), COALESCE((SELECT MAX(cid_id) + 1 FROM cidade), 1), false);
