@@ -1,7 +1,7 @@
 CREATE TABLE cidade (
     cid_id INT PRIMARY KEY,
     cid_nome VARCHAR(200) NOT NULL,
-    cid_uf CHAR(2) NOT NULL
+    cid_uf VARCHAR(2) NOT NULL
 );
 
 CREATE TABLE endereco (
@@ -19,8 +19,8 @@ CREATE TABLE pessoa (
     pes_nome VARCHAR(200) NOT NULL,
     pes_data_nascimento DATE NOT NULL,
     pes_sexo VARCHAR(9) NOT NULL,
-    pes_mae VARCHAR(200),
-    pes_pai VARCHAR(200)
+    pes_mae VARCHAR(200) NOT NULL,
+    pes_pai VARCHAR(200) NOT NULL
 );
 
 CREATE TABLE unidade (
@@ -43,7 +43,7 @@ CREATE TABLE lotacao (
     unid_id INT NOT NULL,
     lot_data_lotacao DATE NOT NULL,
     lot_data_remocao DATE,
-    lot_portaria VARCHAR(100),
+    lot_portaria VARCHAR(100) NOT NULL,
     FOREIGN KEY (pes_id) REFERENCES pessoa(pes_id) ON DELETE CASCADE,
     FOREIGN KEY (unid_id) REFERENCES unidade(unid_id) ON DELETE CASCADE
 );
