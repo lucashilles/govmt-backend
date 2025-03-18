@@ -4,6 +4,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = "pessoa")
@@ -30,5 +31,12 @@ public class Pessoa extends PanacheEntityBase {
 
     @Column(name = "pes_pai", nullable = false, length = 200)
     public String pai;
+
+    @ManyToMany
+    @JoinTable(
+            name = "pessoa_endereco",
+            joinColumns = @JoinColumn(name = "pes_id"),
+            inverseJoinColumns = @JoinColumn(name = "end_id"))
+    public Set<Endereco> enderecos;
 
 }
