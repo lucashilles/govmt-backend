@@ -23,7 +23,7 @@ public class ServidorTemporario extends PanacheEntityBase {
     public Date dataAdmissao;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "fp_data_demissao", nullable = false)
+    @Column(name = "st_data_demissao", nullable = false)
     public Date dataDemissao;
 
 }
