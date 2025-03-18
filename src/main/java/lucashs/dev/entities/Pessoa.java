@@ -41,4 +41,8 @@ public class Pessoa extends PanacheEntityBase {
     @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
     @PrimaryKeyJoinColumn
     private ServidorEfetivo servidorEfetivo;
+
+    @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @PrimaryKeyJoinColumn
+    private ServidorTemporario servidorTemporario;
 }
