@@ -3,6 +3,8 @@ package lucashs.dev.entities;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name="endereco")
 public class Endereco extends PanacheEntityBase {
@@ -28,4 +30,6 @@ public class Endereco extends PanacheEntityBase {
     @JoinColumn(name = "cid_id", nullable = false)
     public Cidade cidade;
 
+    @ManyToMany(mappedBy = "enderecos")
+    public Set<Unidade> unidades;
 }
