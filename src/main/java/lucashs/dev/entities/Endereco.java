@@ -32,4 +32,7 @@ public class Endereco extends PanacheEntityBase {
 
     @ManyToMany(mappedBy = "enderecos")
     public Set<Unidade> unidades;
+
+    @ManyToMany(mappedBy = "enderecos")
+    public Set<Pessoa> pessoas;
 }
