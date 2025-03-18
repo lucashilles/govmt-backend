@@ -38,4 +38,7 @@ public class Pessoa extends PanacheEntityBase {
             inverseJoinColumns = @JoinColumn(name = "end_id"))
     public Set<Endereco> enderecos;
 
+    @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @PrimaryKeyJoinColumn
+    private ServidorEfetivo servidorEfetivo;
 }
