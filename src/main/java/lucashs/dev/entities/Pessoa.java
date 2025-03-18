@@ -19,8 +19,7 @@ public class Pessoa extends PanacheEntityBase {
     public String nome;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "pes_data_nascimento", nullable = false,
-            columnDefinition = "timestamp with time zone not null")
+    @Column(name = "pes_data_nascimento", nullable = false)
     public Date dataNascimento;
 
     @Column(name = "pes_sexo", nullable = false, length = 9)
