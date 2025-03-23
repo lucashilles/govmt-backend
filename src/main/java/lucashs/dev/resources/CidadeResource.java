@@ -1,13 +1,12 @@
 package lucashs.dev.resources;
 
 
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -25,12 +24,31 @@ import lucashs.dev.repositories.CidadeRepository;
 public class CidadeResource {
 
     @Inject
-    CidadeRepository cidadeService;
+    CidadeRepository cidadeRepository;
+
+    @GET
+    @Path("/all")
+    public Response getAll(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize
+    ) {
+        Page page = Page.of(pageIndex, pageSize);
+        PanacheQuery<Cidade> paged = cidadeRepository.findAll().page(page);
+
+        if (paged.count() == 0) {
+            return Response.ok().build();
+        }
+
+        PagedList<Cidade> pagedList = new PagedList<>(paged.list(), page.index + 1,
+                paged.pageCount(), page.size, paged.count());
+
+        return Response.ok(pagedList).build();
+    }
 
     @GET
     @Path("/{id}")
     public Response getCidadeById(@PathParam("id") int id) {
-        return Response.ok(cidadeService.findById(id)).build();
+        return Response.ok(cidadeRepository.findById(id)).build();
     }
 
     @GET
@@ -39,27 +57,13 @@ public class CidadeResource {
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize
     ) {
-        PagedList<Cidade> paginatedList = validateAndFind(nome, pageIndex, pageSize);
-        return Response.ok(paginatedList).build();
-    }
+        Page page = Page.of(pageIndex, pageSize);
+        PagedList<Cidade> paged = cidadeRepository.findByNome(nome, page);
 
-    @POST
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response findCidadeBy(
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("20") int pageSize,
-            String nome
-    ) {
-        PagedList<Cidade> paginatedList = validateAndFind(nome, pageIndex, pageSize);
-        return Response.ok(paginatedList).build();
-    }
-
-    private PagedList<Cidade> validateAndFind(String nome, int pageIndex, int pageSize) {
-        if (nome == null || nome.isBlank()) {
-            throw new BadRequestException("Parâmetro 'nome' deve ser fornecido.");
+        if (paged.size == 0) {
+            return Response.ok().build();
         }
 
-        Page page = Page.of(pageIndex, pageSize);
-        return cidadeService.findByNome(nome, page);
+        return Response.ok(paged).build();
     }
 }
