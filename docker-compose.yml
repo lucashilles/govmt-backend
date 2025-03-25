@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: govmtdb
     ports:
       - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   storage:
     container_name: minio_storage
@@ -43,15 +45,6 @@ services:
       exit 0;
       "
 
-# Test db creation and seed before it is implemented with application
-  flyway:
-    image: flyway/flyway
-    command: -url=jdbc:postgresql://pg_container:5432/govmtdb -user=root -password=root -connectRetries=60 migrate
-    volumes:
-      - ./src/main/resources/db/migration:/flyway/sql
-    depends_on:
-      - db
-# Front end to validate db
   adminer:
     image: adminer
     restart: always
