@@ -20,7 +20,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
-import lucashs.dev.DTOs.ServidorTemporarioDTO;
+import lucashs.dev.DTOs.ServidorTemporarioRequestDTO;
+import lucashs.dev.DTOs.ServidorTemporarioResponseDTO;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.ServidorTemporario;
 import lucashs.dev.repositories.PessoaRepository;
@@ -44,16 +45,18 @@ public class ServidorTemporarioResource {
             @QueryParam("size") @DefaultValue("20") int pageSize
     ) {
         Page page = Page.of(pageIndex, pageSize);
-        PanacheQuery<ServidorTemporario> pagedQuery = servidorTemporarioRepository.findAll().page(page);
+        PanacheQuery<ServidorTemporario> pagedQuery = servidorTemporarioRepository.findAll()
+                .page(page);
 
         if (pagedQuery.count() == 0) {
             return Response.ok().build();
         }
 
-        List<ServidorTemporarioDTO> dtoList = pagedQuery.list().stream().map(this::toDto).toList();
+        List<ServidorTemporarioResponseDTO> dtoList = pagedQuery.list().stream().map(this::toDto)
+                .toList();
 
-        PagedList<ServidorTemporarioDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
-                pagedQuery.pageCount(), page.size, pagedQuery.count());
+        PagedList<ServidorTemporarioResponseDTO> pagedList = new PagedList<>(dtoList,
+                page.index + 1, pagedQuery.pageCount(), page.size, pagedQuery.count());
 
         return Response.ok(pagedList).build();
     }
@@ -71,7 +74,7 @@ public class ServidorTemporarioResource {
 
     @POST
     @Transactional
-    public Response createServidorTemporario(ServidorTemporarioDTO dto, UriInfo uriInfo) {
+    public Response createServidorTemporario(ServidorTemporarioRequestDTO dto, UriInfo uriInfo) {
         ServidorTemporario entity = fromDto(dto);
         servidorTemporarioRepository.persist(entity);
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(entity.id)).build();
@@ -81,7 +84,7 @@ public class ServidorTemporarioResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response updateServidorTemporario(@PathParam("id") int id, ServidorTemporarioDTO dto, UriInfo uriInfo) {
+    public Response updateServidorTemporario(@PathParam("id") int id, ServidorTemporarioRequestDTO dto, UriInfo uriInfo) {
         ServidorTemporario entity = servidorTemporarioRepository.findById(id);
         if (entity == null) {
             throw new NotFoundException();
@@ -106,20 +109,21 @@ public class ServidorTemporarioResource {
         return Response.noContent().build();
     }
 
-    private ServidorTemporarioDTO toDto(ServidorTemporario entity) {
-        ServidorTemporarioDTO dto = new ServidorTemporarioDTO();
+    private ServidorTemporarioResponseDTO toDto(ServidorTemporario entity) {
+        ServidorTemporarioResponseDTO dto = new ServidorTemporarioResponseDTO();
         dto.id = entity.id;
+        dto.nome = entity.pessoa.nome;
         dto.dataAdmissao = entity.dataAdmissao;
         dto.dataDemissao = entity.dataDemissao;
         return dto;
     }
 
-    private ServidorTemporario fromDto(ServidorTemporarioDTO dto) {
+    private ServidorTemporario fromDto(ServidorTemporarioRequestDTO dto) {
         ServidorTemporario entity = new ServidorTemporario();
         return updateFromDto(entity, dto);
     }
 
-    private ServidorTemporario updateFromDto(ServidorTemporario entity, ServidorTemporarioDTO dto) {
+    private ServidorTemporario updateFromDto(ServidorTemporario entity, ServidorTemporarioRequestDTO dto) {
         entity.dataAdmissao = dto.dataAdmissao;
         entity.dataDemissao = dto.dataDemissao;
         entity.pessoa = pessoaRepository.findById(dto.id);

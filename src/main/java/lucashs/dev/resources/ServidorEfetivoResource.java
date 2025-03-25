@@ -20,11 +20,13 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.List;
-import lucashs.dev.DTOs.ServidorEfetivoDTO;
+import lucashs.dev.DTOs.ServidorEfetivoRequestDTO;
+import lucashs.dev.DTOs.ServidorEfetivoResponseDTO;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.ServidorEfetivo;
 import lucashs.dev.repositories.PessoaRepository;
 import lucashs.dev.repositories.ServidorEfetivoRepository;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/servidor-efetivo")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -50,12 +52,33 @@ public class ServidorEfetivoResource {
             return Response.ok().build();
         }
 
-        List<ServidorEfetivoDTO> dtoList = pagedQuery.list().stream().map(this::toDto).toList();
-
-        PagedList<ServidorEfetivoDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
+        List<ServidorEfetivoResponseDTO> dtoList = pagedQuery.list().stream().map(this::toDto).toList();
+        PagedList<ServidorEfetivoResponseDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
                 pagedQuery.pageCount(), page.size, pagedQuery.count());
 
         return Response.ok(pagedList).build();
+    }
+
+    @GET
+    @Operation(description = "Retorna lista de servidores efetivos para determinada unidade.")
+    public Response getAllByUnidade(
+            @QueryParam("unidadeId") int unidadeId,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize
+    ) {
+        Page page = Page.of(pageIndex, pageSize);
+        PanacheQuery<ServidorEfetivo> paged = servidorEfetivoRepository.getByUnidadeId(unidadeId).page(page);
+
+        if (paged.count() == 0) {
+            System.out.println("Nenhum encontrado");
+            return Response.ok().build();
+        }
+
+        List<ServidorEfetivoResponseDTO> dtoList = paged.list().stream().map(this::toDto).toList();
+        PagedList<ServidorEfetivoResponseDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
+                paged.pageCount(), page.size, paged.count());
+
+        return Response.ok(paged).build();
     }
 
     @GET
@@ -73,7 +96,7 @@ public class ServidorEfetivoResource {
 
     @POST
     @Transactional
-    public Response createServidorEfetivo(ServidorEfetivoDTO dto, UriInfo uriInfo) {
+    public Response createServidorEfetivo(ServidorEfetivoRequestDTO dto, UriInfo uriInfo) {
         ServidorEfetivo entity = fromDto(dto);
         servidorEfetivoRepository.persist(entity);
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(entity.id)).build();
@@ -83,7 +106,7 @@ public class ServidorEfetivoResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response updateServidorEfetivo(@PathParam("id") int id, ServidorEfetivoDTO dto, UriInfo uriInfo) {
+    public Response updateServidorEfetivo(@PathParam("id") int id, ServidorEfetivoRequestDTO dto, UriInfo uriInfo) {
         ServidorEfetivo entity = servidorEfetivoRepository.findById(id);
         if (entity == null) {
             throw new NotFoundException();
@@ -108,19 +131,20 @@ public class ServidorEfetivoResource {
         return Response.noContent().build();
     }
 
-    private ServidorEfetivoDTO toDto(ServidorEfetivo entity) {
-        ServidorEfetivoDTO dto = new ServidorEfetivoDTO();
+    private ServidorEfetivoResponseDTO toDto(ServidorEfetivo entity) {
+        ServidorEfetivoResponseDTO dto = new ServidorEfetivoResponseDTO();
         dto.id = entity.id;
         dto.matricula = entity.matricula;
+        dto.nome = entity.pessoa.nome;
         return dto;
     }
 
-    private ServidorEfetivo fromDto(ServidorEfetivoDTO dto) {
+    private ServidorEfetivo fromDto(ServidorEfetivoRequestDTO dto) {
         ServidorEfetivo entity = new ServidorEfetivo();
         return updateFromDto(entity, dto);
     }
 
-    private ServidorEfetivo updateFromDto(ServidorEfetivo entity, ServidorEfetivoDTO dto) {
+    private ServidorEfetivo updateFromDto(ServidorEfetivo entity, ServidorEfetivoRequestDTO dto) {
         entity.matricula = dto.matricula;
         entity.pessoa = pessoaRepository.findById(dto.id);
         return entity;
