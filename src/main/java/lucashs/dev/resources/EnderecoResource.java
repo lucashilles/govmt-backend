@@ -18,17 +18,19 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 import lucashs.dev.DTOs.EnderecoDTO;
+import lucashs.dev.DTOs.EnderecoFuncionalDTO;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.Endereco;
+import lucashs.dev.entities.Lotacao;
 import lucashs.dev.repositories.CidadeRepository;
 import lucashs.dev.repositories.EnderecoRepository;
+import lucashs.dev.repositories.LotacaoRepository;
 import lucashs.dev.repositories.PessoaRepository;
 import lucashs.dev.repositories.UnidadeRepository;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/endereco")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -47,7 +49,11 @@ public class EnderecoResource {
     @Inject
     PessoaRepository pessoaRepository;
 
+    @Inject
+    LotacaoRepository lotacaoRepository;
+
     @GET
+    @Path("/all")
     public Response getAll(
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize
@@ -76,6 +82,28 @@ public class EnderecoResource {
         }
 
         return Response.ok(toDTO(entity)).build();
+    }
+
+    @GET
+    @Operation(description = "Busca endereço funcional a partir do nome parcial do servidor efetivo.")
+    public Response getByNomeParcialServidorEfetivo(
+            @QueryParam("nomeParcial") String nomeParcial,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize
+    ) {
+        Page page = Page.of(pageIndex, pageSize);
+        PanacheQuery<Lotacao> pagedQuery = lotacaoRepository.findByNomeParcialServidorEfetivo(nomeParcial).page(page);
+
+        if (pagedQuery.list().isEmpty()) {
+            return Response.ok().build();
+        }
+
+        List<EnderecoFuncionalDTO> dtoList = pagedQuery.list().stream().map(this::toEnderecoFuncionaDTO).toList();
+
+        PagedList<EnderecoFuncionalDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
+                pagedQuery.pageCount(), page.size, pagedQuery.count());
+
+        return Response.ok(pagedList).build();
     }
 
     @POST
@@ -112,6 +140,25 @@ public class EnderecoResource {
                 : Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    private EnderecoFuncionalDTO toEnderecoFuncionaDTO(Lotacao lotacao) {
+        EnderecoFuncionalDTO dto = new EnderecoFuncionalDTO();
+
+        dto.servidorEfetivo = Map.of(
+                "id", lotacao.pessoa.id,
+                "nome", lotacao.pessoa.nome,
+                "matricula", lotacao.pessoa.getServidorEfetivo().matricula
+        );
+
+        dto.unidade = Map.of(
+                "id", lotacao.unidade.id,
+                "nome", lotacao.unidade.nome,
+                "sigla", lotacao.unidade.sigla,
+                "enderecos", lotacao.unidade.enderecos.stream().map(this::toDTO).toArray()
+        );
+
+        return dto;
+    }
+
     private EnderecoDTO toDTO(Endereco entity) {
         EnderecoDTO dto = new EnderecoDTO();
         dto.id = entity.id;
@@ -120,8 +167,6 @@ public class EnderecoResource {
         dto.numero = entity.numero;
         dto.bairro = entity.bairro;
         dto.cidadeId = entity.cidade.id;
-        dto.unidadeIds = entity.unidades.stream().map(u -> u.id).collect(Collectors.toSet());
-        dto.pessoaIds = entity.pessoas.stream().map(p -> p.id).collect(Collectors.toSet());
         return dto;
     }
 
@@ -136,8 +181,6 @@ public class EnderecoResource {
         entity.numero = dto.numero;
         entity.bairro = dto.bairro;
         entity.cidade = cidadeRepository.findById(dto.cidadeId);
-        entity.unidades = new HashSet<>(unidadeRepository.list("id IN ?1", dto.unidadeIds));
-        entity.pessoas = new HashSet<>(pessoaRepository.list("id IN ?1", dto.pessoaIds));
         return entity;
     }
 }
