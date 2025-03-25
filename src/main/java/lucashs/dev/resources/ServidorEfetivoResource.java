@@ -26,6 +26,7 @@ import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.ServidorEfetivo;
 import lucashs.dev.repositories.PessoaRepository;
 import lucashs.dev.repositories.ServidorEfetivoRepository;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/servidor-efetivo")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -56,6 +57,28 @@ public class ServidorEfetivoResource {
                 pagedQuery.pageCount(), page.size, pagedQuery.count());
 
         return Response.ok(pagedList).build();
+    }
+
+    @GET
+    @Operation(description = "Retorna lista de servidores efetivos para determinada unidade.")
+    public Response getAllByUnidade(
+            @QueryParam("unidadeId") int unidadeId,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("20") int pageSize
+    ) {
+        Page page = Page.of(pageIndex, pageSize);
+        PanacheQuery<ServidorEfetivo> paged = servidorEfetivoRepository.getByUnidadeId(unidadeId).page(page);
+
+        if (paged.count() == 0) {
+            System.out.println("Nenhum encontrado");
+            return Response.ok().build();
+        }
+
+        List<ServidorEfetivoResponseDTO> dtoList = paged.list().stream().map(this::toDto).toList();
+        PagedList<ServidorEfetivoResponseDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
+                paged.pageCount(), page.size, paged.count());
+
+        return Response.ok(paged).build();
     }
 
     @GET
