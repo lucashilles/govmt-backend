@@ -1,6 +1,6 @@
 package lucashs.dev.DTOs;
 
-public class ServidorEfetivoDTO {
+public class ServidorEfetivoRequestDTO {
     public int id;
     public String matricula;
 }
