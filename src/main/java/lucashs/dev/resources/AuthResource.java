@@ -1,6 +1,7 @@
 package lucashs.dev.resources;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
+import io.quarkus.security.Authenticated;
 import io.quarkus.security.UnauthorizedException;
 import io.smallrye.jwt.auth.principal.ParseException;
 import jakarta.inject.Inject;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.POST;
@@ -36,6 +38,15 @@ public class AuthResource {
 
     @Inject
     UsuarioRepository usuarioRepository;
+
+    @GET
+    @Path("/me")
+    @Authenticated
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response me() {
+        String role = jwt.getGroups().stream().findFirst().orElse("");
+        return Response.ok(Map.of("Usuario", jwt.getName(), "Papel", role)).build();
+    }
 
     @POST
     @Path("/login")
