@@ -2,6 +2,8 @@ package lucashs.dev.resources;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
@@ -33,6 +35,7 @@ import lucashs.dev.repositories.UnidadeRepository;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/endereco")
+@Authenticated
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class EnderecoResource {
@@ -117,6 +120,7 @@ public class EnderecoResource {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed({ "Admin" })
     @Transactional
     public Response updateEndereco(@PathParam("id") int id, EnderecoDTO dto, UriInfo uriInfo) {
         Endereco entity = enderecoRepository.findById(id);
@@ -133,6 +137,7 @@ public class EnderecoResource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed({ "Admin" })
     @Transactional
     public Response deleteEndereco(@PathParam("id") int id) {
         boolean deleted = enderecoRepository.deleteById(id);

@@ -2,6 +2,8 @@ package lucashs.dev.resources;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
@@ -28,6 +30,7 @@ import lucashs.dev.repositories.PessoaRepository;
 import lucashs.dev.repositories.ServidorTemporarioRepository;
 
 @Path("/servidor-temporario")
+@Authenticated
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class ServidorTemporarioResource {
@@ -98,6 +101,7 @@ public class ServidorTemporarioResource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed({ "Admin" })
     @Transactional
     public Response deleteServidorTemporario(@PathParam("id") int id) {
         boolean deleted = servidorTemporarioRepository.deleteById(id);

@@ -2,6 +2,8 @@ package lucashs.dev.resources;
 
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
@@ -29,6 +31,7 @@ import lucashs.dev.repositories.EnderecoRepository;
 import lucashs.dev.repositories.PessoaRepository;
 
 @Path("/pessoa")
+@Authenticated
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class PessoaResource {
@@ -100,6 +103,7 @@ public class PessoaResource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed({ "Admin" })
     @Transactional
     public Response deletePessoa(@PathParam("id") int id) {
         boolean deleted = pessoaRepository.deleteById(id);
