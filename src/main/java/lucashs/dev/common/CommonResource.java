@@ -6,7 +6,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 @Path("/common")
-public class CommonController {
+public class CommonResource {
 
     @GET
     @Path("/ping")
