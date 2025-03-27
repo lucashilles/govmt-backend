@@ -90,7 +90,7 @@ public class EnderecoResource {
     @GET
     @Operation(description = "Busca endereço funcional a partir do nome parcial do servidor efetivo.")
     public Response getByNomeParcialServidorEfetivo(
-            @QueryParam("nomeParcial") String nomeParcial,
+            @QueryParam("nome_parcial") String nomeParcial,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize
     ) {

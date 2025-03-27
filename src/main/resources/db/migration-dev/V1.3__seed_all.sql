@@ -15,12 +15,12 @@ SELECT setval(pg_get_serial_sequence('endereco', 'end_id'), COALESCE((SELECT MAX
 
 --- PESSOA
 INSERT INTO "pessoa" ("pes_id", "pes_nome", "pes_data_nascimento", "pes_sexo", "pes_mae", "pes_pai") VALUES
-(1,	'Josney Silva',	'2000-03-09',	'macho',	'Mariazinha Joana',	'Gerson Geraldo'),
-(2,	'Julia Jasmin',	'1999-03-08',	'femea',	'Mariquinha Moana',	'João Pedro'),
-(3,	'Carlos Alexandre',	'1963-06-25',	'Macho',	'Antônia Felícia',	'Nonato Alexandre'),
-(4,	'Francisco Chagas',	'2004-11-14',	'Macho',	'Tina Gusman',	'Manoel Chagas'),
-(5,	'Marieta Rosa',	'1980-10-12',	'Fêmea',	'Vânia Vampi',	'João Rosa'),
-(6,	'Bella Pocas',	'1992-12-02',	'Fêmea',	'Ceci Jucá',	'Luigi Pocas');
+(1,	'Josney Silva',	'2000-03-09',	'Masculino',	'Mariazinha Joana',	'Gerson Geraldo'),
+(2,	'Julia Jasmin',	'1999-03-08',	'Feminino',	'Mariquinha Moana',	'João Pedro'),
+(3,	'Carlos Alexandre',	'1963-06-25',	'Masculino',	'Antônia Felícia',	'Nonato Alexandre'),
+(4,	'Francisco Chagas',	'2004-11-14',	'Masculino',	'Tina Gusman',	'Manoel Chagas'),
+(5,	'Marieta Rosa',	'1980-10-12',	'Feminino',	'Vânia Vampi',	'João Rosa'),
+(6,	'Bella Pocas',	'1992-12-02',	'Feminino',	'Ceci Jucá',	'Luigi Pocas');
 
 SELECT setval(pg_get_serial_sequence('pessoa', 'pes_id'), COALESCE((SELECT MAX(pes_id) + 1 FROM pessoa), 1), false);
 --- PESSOA

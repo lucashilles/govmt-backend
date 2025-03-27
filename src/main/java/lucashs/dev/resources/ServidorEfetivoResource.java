@@ -21,13 +21,25 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
+import lucashs.dev.DTOs.ServidorDTO;
 import lucashs.dev.DTOs.ServidorEfetivoRequestDTO;
 import lucashs.dev.DTOs.ServidorEfetivoResponseDTO;
+import lucashs.dev.DTOs.UnidadeDTO;
 import lucashs.dev.common.PagedList;
+import lucashs.dev.entities.FotoPessoa;
 import lucashs.dev.entities.ServidorEfetivo;
+import lucashs.dev.entities.Unidade;
+import lucashs.dev.repositories.FotoPessoaRepository;
 import lucashs.dev.repositories.PessoaRepository;
 import lucashs.dev.repositories.ServidorEfetivoRepository;
+import lucashs.dev.repositories.UnidadeRepository;
+import lucashs.dev.services.FotoPessoaService;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
 @Path("/servidor-efetivo")
@@ -37,10 +49,19 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 public class ServidorEfetivoResource {
 
     @Inject
+    FotoPessoaRepository fotoPessoaRepository;
+
+    @Inject
+    FotoPessoaService fotoPessoaService;
+
+    @Inject
     PessoaRepository pessoaRepository;
 
     @Inject
     ServidorEfetivoRepository servidorEfetivoRepository;
+
+    @Inject
+    UnidadeRepository unidadeRepository;
 
     @GET
     @Path("/all")
@@ -65,23 +86,28 @@ public class ServidorEfetivoResource {
     @GET
     @Operation(description = "Retorna lista de servidores efetivos para determinada unidade.")
     public Response getAllByUnidade(
-            @QueryParam("unidadeId") int unidadeId,
+            @QueryParam("unid_id") int unidadeId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize
     ) {
+        Unidade unidade = unidadeRepository.findById(unidadeId);
+        if (unidade == null) {
+            throw new NotFoundException("Unidade não encontrada.");
+        }
+
         Page page = Page.of(pageIndex, pageSize);
         PanacheQuery<ServidorEfetivo> paged = servidorEfetivoRepository.getByUnidadeId(unidadeId).page(page);
 
         if (paged.count() == 0) {
-            System.out.println("Nenhum encontrado");
-            return Response.ok().build();
+            throw new NotFoundException("Nenhum servidor efetivo encontrado lotado nesta unidade.");
         }
 
-        List<ServidorEfetivoResponseDTO> dtoList = paged.list().stream().map(this::toDto).toList();
-        PagedList<ServidorEfetivoResponseDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
+        List<ServidorDTO> servidores = paged.list().stream().map(se -> getServidorDTO(se, unidade)).toList();
+
+        PagedList<ServidorDTO> pagedList = new PagedList<>(servidores, page.index + 1,
                 paged.pageCount(), page.size, paged.count());
 
-        return Response.ok(paged).build();
+        return Response.ok(pagedList).build();
     }
 
     @GET
@@ -133,6 +159,28 @@ public class ServidorEfetivoResource {
         }
 
         return Response.noContent().build();
+    }
+
+    private ServidorDTO getServidorDTO(ServidorEfetivo se, Unidade unidade) {
+        ServidorDTO servidorDTO = new ServidorDTO();
+        servidorDTO.unidade = new UnidadeDTO(unidade);
+        servidorDTO.nome = se.pessoa.nome;
+        servidorDTO.idade = calculateAge(se.pessoa.dataNascimento);
+        servidorDTO.foto = getPhotos(se.id);
+        return servidorDTO;
+    }
+
+    public int calculateAge(Date date) {
+        LocalDate dataNasc = Instant.parse(date.toString() + "T00:00:00.00Z").atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate dataAtual = LocalDate.now();
+        return (int) ChronoUnit.YEARS.between(dataNasc, dataAtual);
+    }
+
+    private List<String> getPhotos(int pessoaId) {
+        List<FotoPessoa> fotoPessoas = fotoPessoaRepository.find("pessoa.id", pessoaId).list();
+        return fotoPessoas.stream()
+                .map(fp -> fotoPessoaService.getTempDownloadUrl(fp.hash))
+                .toList();
     }
 
     private ServidorEfetivoResponseDTO toDto(ServidorEfetivo entity) {

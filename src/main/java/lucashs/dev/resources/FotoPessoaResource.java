@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -18,17 +19,15 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import lucashs.dev.DTOs.FotoPessoaDTO;
-import lucashs.dev.common.FileHashing;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.FotoPessoa;
 import lucashs.dev.entities.Pessoa;
 import lucashs.dev.repositories.FotoPessoaRepository;
 import lucashs.dev.repositories.PessoaRepository;
-import lucashs.dev.services.MinioService;
+import lucashs.dev.services.FotoPessoaService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestForm;
@@ -45,7 +44,7 @@ public class FotoPessoaResource {
     String bucketName;
 
     @Inject
-    MinioService minioService;
+    FotoPessoaService fotoPessoaService;
 
     @Inject
     FotoPessoaRepository fotoPessoaRepository;
@@ -53,13 +52,11 @@ public class FotoPessoaResource {
     @Inject
     PessoaRepository pessoaRepository;
 
-    private final String basePath = "foto-pessoa/";
-
     private static final Logger LOG = Logger.getLogger(FotoPessoaResource.class);
 
     @GET
     @Path("/{id}")
-    public Response getDownloadUrl(@PathParam("id") int id) {
+    public Response getUrlByFotoId(@PathParam("id") int id) {
         FotoPessoa entity = fotoPessoaRepository.findById(id);
 
         if (entity == null) {
@@ -70,13 +67,13 @@ public class FotoPessoaResource {
     }
 
     @GET
-    public Response getDownloadUrl(
-            @QueryParam("pessoaId") String pessoaId,
+    public Response getUrlByPessoaId(
+            @QueryParam("pessoa_id") String pessoaId,
             @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int pageSize
     ) {
         Page page = Page.of(pageIndex, pageSize);
-        PanacheQuery<FotoPessoa> pagedQuery = fotoPessoaRepository.find("pessoa IN ?1", pessoaId).page(page);
+        PanacheQuery<FotoPessoa> pagedQuery = fotoPessoaRepository.find("pessoa.id", pessoaId).page(page);
 
         if (pagedQuery.count() == 0) {
             return Response.ok().build();
@@ -91,17 +88,15 @@ public class FotoPessoaResource {
     }
 
     @POST
-    @Path("/{pessoaId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Transactional
     public Response upload(
-            @PathParam("pessoaId") int pessoaId,
-            @RestForm("foto") FileUpload file,
+            @QueryParam("pessoa_id") int pessoaId,
+            @RestForm(FileUpload.ALL) List<FileUpload> files,
             UriInfo uriInfo
     ) {
-        if (file == null || !file.contentType().contains("image")) {
-            return Response.status(Status.BAD_REQUEST.getStatusCode(),
-                    "Field 'foto' must be an image.").build();
+        if (files.isEmpty()) {
+            throw new BadRequestException("At least one file must be included.");
         }
 
         Pessoa pessoa = pessoaRepository.findById(pessoaId);
@@ -109,47 +104,38 @@ public class FotoPessoaResource {
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        String fileHash = "";
-        try {
-            fileHash = FileHashing.getFileHash(file.filePath());
-        } catch (Exception e) {
-            LOG.error("Failed to hash uploaded file.", e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR);
-        }
+        files.forEach(file -> {
+            if (file == null || !file.contentType().contains("image")) {
+                throw new BadRequestException("Field 'foto' must be an image.");
+            }
+        });
 
-        String fileName = file.fileName();
-        String fileExtension = fileName.substring(fileName.lastIndexOf('.'));
-        String etag = "";
-        try {
-            etag = minioService.uploadFile(
-                    file.filePath().toString(),basePath + fileHash + fileExtension);
-        } catch (Exception e) {
-            LOG.error("Failed to uploade file to object storage", e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR);
-        }
+        List<FotoPessoaDTO> dtoList = files.stream()
+                .map(file -> {
+                    String uploadedFile = fotoPessoaService.uploadFile(file);
+                    FotoPessoa fotoPessoa = saveFotoPessoa(pessoa, uploadedFile);
+                    return getDtoWithUrl(fotoPessoa);
+                }).toList();
 
-        if (etag.isBlank()) {
-            LOG.error("Something went wrong when trying to upload file to object storage.\n ==> ID Pessoa: " + pessoaId);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR);
-        }
+        return Response.ok(dtoList).build();
+    }
 
+    private FotoPessoa saveFotoPessoa(Pessoa pessoa, String uploadedFile) {
         FotoPessoa fotoPessoa = new FotoPessoa();
         fotoPessoa.bucket = bucketName;
         fotoPessoa.data = new Date();
         fotoPessoa.pessoa = pessoa;
-        fotoPessoa.hash = fileHash + fileExtension;
+        fotoPessoa.hash = uploadedFile;
 
         fotoPessoaRepository.persist(fotoPessoa);
-
-        URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(fotoPessoa.id)).build();
-        return Response.created(path).entity(getDtoWithUrl(fotoPessoa)).build();
+        return fotoPessoa;
     }
 
     private FotoPessoaDTO getDtoWithUrl(FotoPessoa fp) {
         String tmpDownloadUrl = "";
 
         try {
-            tmpDownloadUrl = minioService.getTempDownloadUrl(basePath + fp.hash);
+            tmpDownloadUrl = fotoPessoaService.getTempDownloadUrl(fp.hash);
         } catch (Exception e) {
             LOG.error("Failed to uploade file to object storage", e);
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR);
@@ -157,7 +143,6 @@ public class FotoPessoaResource {
 
         return toDto(fp, tmpDownloadUrl);
     }
-
 
     private FotoPessoaDTO toDto(FotoPessoa entity, String url) {
         FotoPessoaDTO dto = new FotoPessoaDTO();
