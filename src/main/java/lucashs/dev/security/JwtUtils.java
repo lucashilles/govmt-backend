@@ -7,10 +7,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @ApplicationScoped
 public class JwtUtils {
+
+    @ConfigProperty(name = "govmt.jwt.expiration")
+    int expiration;
 
     @Inject
     JWTParser jwtParser;
@@ -19,7 +23,7 @@ public class JwtUtils {
         Instant now = Instant.now();
         return Jwt.issuer("https://lucashs.dev/")
                 .subject(email)
-                .expiresAt(now.plus(Duration.ofMinutes(5)))
+                .expiresAt(now.plus(Duration.ofMinutes(expiration)))
                 .groups(role)
                 .sign();
     }

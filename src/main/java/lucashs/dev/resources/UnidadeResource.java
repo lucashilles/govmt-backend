@@ -23,7 +23,6 @@ import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import lucashs.dev.DTOs.UnidadeDTO;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.Unidade;
@@ -55,7 +54,7 @@ public class UnidadeResource {
             return Response.ok().build();
         }
 
-        List<UnidadeDTO> dtoList = pagedQuery.list().stream().map(this::toDto).toList();
+        List<UnidadeDTO> dtoList = pagedQuery.list().stream().map(UnidadeDTO::new).toList();
 
         PagedList<UnidadeDTO> pagedList = new PagedList<>(dtoList, page.index + 1,
                 pagedQuery.pageCount(), page.size, pagedQuery.count());
@@ -73,7 +72,7 @@ public class UnidadeResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        return Response.ok(toDto(entity)).build();
+        return Response.ok(new UnidadeDTO(entity)).build();
     }
 
     @POST
@@ -82,7 +81,7 @@ public class UnidadeResource {
         Unidade entity = fromDto(dto);
         unidadeRepository.persist(entity);
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(entity.id)).build();
-        return Response.created(path).entity(toDto(entity)).build();
+        return Response.created(path).entity(new UnidadeDTO(entity)).build();
     }
 
     @PUT
@@ -97,7 +96,7 @@ public class UnidadeResource {
         Unidade updatedEntity = updateFromDto(entity, dto);
 
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(updatedEntity.id)).build();
-        return Response.created(path).entity(toDto(entity)).build();
+        return Response.created(path).entity(new UnidadeDTO(entity)).build();
     }
 
     @DELETE
@@ -112,15 +111,6 @@ public class UnidadeResource {
         }
 
         return Response.noContent().build();
-    }
-
-    private UnidadeDTO toDto(Unidade entity) {
-        UnidadeDTO dto = new UnidadeDTO();
-        dto.id = entity.id;
-        dto.nome = entity.nome;
-        dto.sigla = entity.sigla;
-        dto.enderecoIds = entity.enderecos.stream().map(e -> e.id).collect(Collectors.toSet());
-        return dto;
     }
 
     private Unidade fromDto(UnidadeDTO dto) {
