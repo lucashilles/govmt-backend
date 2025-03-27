@@ -51,16 +51,20 @@ services:
     ports:
       - "7000:8080"
 
-#  application:
-#    build: ./
-#    restart: always
-#    container_name: application_container
-#    healthcheck:
-#      test: curl --fail -s http://localhost:8080/api/common/ping || exit 1
-#      interval: 30s
-#      timeout: 2s
-#      retries: 1
-#    depends_on:
-#      - db
-#    ports:
-#      - "8080:8080"
+  backend:
+    profiles:
+      - prod
+    image: lucashs.dev/govmt-backend:latest
+    environment:
+      GOVMT_DEFAULT_USER: Admin
+      GOVMT_DEFAULT_EMAIL: admin@email.com
+      GOVMT_DEFAULT_PASSWORD: admin
+    healthcheck:
+      test: curl --fail -s http://localhost:8080/api/common/ping || exit 1
+      interval: 30s
+      timeout: 2s
+      retries: 1
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
