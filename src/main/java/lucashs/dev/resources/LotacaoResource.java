@@ -6,6 +6,7 @@ import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -79,6 +80,10 @@ public class LotacaoResource {
     @POST
     @Transactional
     public Response createLotacao(LotacaoDTO dto, UriInfo uriInfo) {
+        if (dto.dataRemocao != null && dto.dataRemocao.isBefore(dto.dataLotacao)) {
+            throw new BadRequestException("Remoção deve ser posterior à lotação!");
+        }
+
         Lotacao entity = fromDto(dto);
         lotacaoRepository.persist(entity);
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(entity.id)).build();
@@ -93,6 +98,10 @@ public class LotacaoResource {
         Lotacao entity = lotacaoRepository.findById(id);
         if (entity == null) {
             throw new NotFoundException();
+        }
+
+        if (dto.dataRemocao != null && dto.dataRemocao.isBefore(dto.dataLotacao)) {
+            throw new BadRequestException("Remoção deve ser posterior à lotação!");
         }
 
         Lotacao updatedEntity = updateFromDto(entity, dto);

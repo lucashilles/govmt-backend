@@ -6,6 +6,7 @@ import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -79,6 +81,10 @@ public class PessoaResource {
     @POST
     @Transactional
     public Response createPessoa(PessoaDTO dto, UriInfo uriInfo) {
+        if (LocalDate.now().isBefore(dto.dataNascimento)) {
+            throw new BadRequestException("Data de nascimento inválida.");
+        }
+
         Pessoa entity = fromDto(dto);
         pessoaRepository.persist(entity);
         URI path = uriInfo.getAbsolutePathBuilder().path(Integer.toString(entity.id)).build();
@@ -93,6 +99,10 @@ public class PessoaResource {
         Pessoa entity = pessoaRepository.findById(id);
         if (entity == null) {
             throw new NotFoundException();
+        }
+
+        if (LocalDate.now().isBefore(dto.dataNascimento)) {
+            throw new BadRequestException("Data de nascimento inválida.");
         }
 
         Pessoa updatedEntity = updateFromDto(entity, dto);
