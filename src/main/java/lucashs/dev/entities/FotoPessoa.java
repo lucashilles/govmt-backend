@@ -1,9 +1,18 @@
 package lucashs.dev.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
 
-import java.util.Date;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "foto_pessoa")
@@ -20,7 +29,7 @@ public class FotoPessoa extends PanacheEntityBase {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "fp_data", nullable = false)
-    public Date data;
+    public LocalDate data;
 
     @Column(name = "fp_bucket", nullable = false, length = 50)
     public String bucket;

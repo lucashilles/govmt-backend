@@ -21,11 +21,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 import lucashs.dev.DTOs.ServidorDTO;
 import lucashs.dev.DTOs.ServidorEfetivoRequestDTO;
@@ -170,8 +167,7 @@ public class ServidorEfetivoResource {
         return servidorDTO;
     }
 
-    public int calculateAge(Date date) {
-        LocalDate dataNasc = Instant.parse(date.toString() + "T00:00:00.00Z").atZone(ZoneId.systemDefault()).toLocalDate();
+    public int calculateAge(LocalDate dataNasc) {
         LocalDate dataAtual = LocalDate.now();
         return (int) ChronoUnit.YEARS.between(dataNasc, dataAtual);
     }

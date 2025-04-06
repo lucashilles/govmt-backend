@@ -1,10 +1,10 @@
 package lucashs.dev.DTOs;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class ServidorTemporarioResponseDTO {
     public int id;
     public String nome;
-    public Date dataAdmissao;
-    public Date dataDemissao;
+    public LocalDate dataAdmissao;
+    public LocalDate dataDemissao;
 }

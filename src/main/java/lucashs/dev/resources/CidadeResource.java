@@ -1,6 +1,5 @@
 package lucashs.dev.resources;
 
-
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import jakarta.annotation.security.PermitAll;
@@ -25,7 +24,6 @@ import java.net.URI;
 import lucashs.dev.common.PagedList;
 import lucashs.dev.entities.Cidade;
 import lucashs.dev.repositories.CidadeRepository;
-
 
 @Path("/cidade")
 @Consumes(MediaType.APPLICATION_JSON)
