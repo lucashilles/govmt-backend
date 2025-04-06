@@ -19,7 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import lucashs.dev.DTOs.FotoPessoaDTO;
 import lucashs.dev.common.PagedList;
@@ -32,7 +32,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
-
 
 @Path("/foto-pessoa")
 @Authenticated
@@ -123,7 +122,7 @@ public class FotoPessoaResource {
     private FotoPessoa saveFotoPessoa(Pessoa pessoa, String uploadedFile) {
         FotoPessoa fotoPessoa = new FotoPessoa();
         fotoPessoa.bucket = bucketName;
-        fotoPessoa.data = new Date();
+        fotoPessoa.data = LocalDate.now();
         fotoPessoa.pessoa = pessoa;
         fotoPessoa.hash = uploadedFile;
 

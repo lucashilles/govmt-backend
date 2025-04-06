@@ -1,9 +1,9 @@
 package lucashs.dev.DTOs;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class ServidorTemporarioRequestDTO {
     public int id;
-    public Date dataAdmissao;
-    public Date dataDemissao;
+    public LocalDate dataAdmissao;
+    public LocalDate dataDemissao;
 }

@@ -1,12 +1,12 @@
 package lucashs.dev.DTOs;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class LotacaoDTO {
     public int id;
     public int pessoaId;
     public int unidadeId;
-    public Date dataLotacao;
-    public Date dataRemocao;
+    public LocalDate dataLotacao;
+    public LocalDate dataRemocao;
     public String portaria;
 }

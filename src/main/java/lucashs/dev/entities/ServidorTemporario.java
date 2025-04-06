@@ -1,9 +1,17 @@
 package lucashs.dev.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
 
-import java.util.Date;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "servidor_temporario")
@@ -20,10 +28,10 @@ public class ServidorTemporario extends PanacheEntityBase {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "st_data_admissao", nullable = false)
-    public Date dataAdmissao;
+    public LocalDate dataAdmissao;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "st_data_demissao", nullable = false)
-    public Date dataDemissao;
+    public LocalDate dataDemissao;
 
 }
